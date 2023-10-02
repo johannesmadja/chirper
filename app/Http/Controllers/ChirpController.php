@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\chirp;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class ChirpController extends Controller
@@ -12,7 +13,10 @@ class ChirpController extends Controller
      */
     public function index()
     {
-        return view("chirps.index");
+        // dd(User::all());
+        return view("chirps.index", [
+            'chirps' => Chirp::orderBy('created_at', 'DESC')->get(),
+        ]);
     }
 
     /**
@@ -52,7 +56,7 @@ class ChirpController extends Controller
      */
     public function edit(chirp $chirp)
     {
-        //
+        return view('chirps.edit', ['chirp' => $chirp]);
     }
 
     /**
@@ -60,7 +64,15 @@ class ChirpController extends Controller
      */
     public function update(Request $request, chirp $chirp)
     {
-        //
+        // Vérifier si l'utilisateur à l'authorisation de modifier le commentaire
+        $this->authorize('update', $chirp);
+
+        $validated = $request->validate([
+            'message' => 'required|string|max:255',
+        ]); // Validation des données
+
+        $chirp->update($validated); // mise à jour
+        return redirect(route('chirps.index')); // redirection
     }
 
     /**
@@ -68,6 +80,13 @@ class ChirpController extends Controller
      */
     public function destroy(chirp $chirp)
     {
-        //
+        //vérifier l'authorisation de l'utilisateur 
+        $this->authorize('delete', $chirp);
+
+        // supprimer la ressource 
+        $chirp->delete();
+
+        // Rediriger vers la page des commentaires
+        return redirect(route('chirps.index'));
     }
 }

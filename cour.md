@@ -17,22 +17,25 @@ Ensuite `php artisan breeze:install` -> blade -> yes -> entrer
 Un système d'authentification a été crée avec un login et un register. Il faut ensuite envoyer les données vers la vase de donnée avec un `php artisan migrate`
 
 ## Les composants
-### composants sous forme de classes 
+### composants sous forme de classes :
 composants les plus versatiles et robuste qui peuvent prendre des paramètres 
 
-### composants anonymes 
+### composants anonymes :
 composants simples ne prennant aucun paramètre
 
 ## Fonctions d'aide Laravel
-`route()` : fonction qui génère l'URL correspondant à une route nommée `{{route('chirps.index')}}`
-`action()` : fonction qui génère l'URL correspondant à l'action d'un contrôleur donné `{{action([ChirpsController::class, index])}}`
-`url()` : fonction qui génère l'URL complète
+- `route()` : fonction qui génère l'URL correspondant à une route nommée `{{route('chirps.index')}}`
+- `action()` : fonction qui génère l'URL correspondant à l'action d'un contrôleur donné `{{action([ChirpsController::class, index])}}`
+  
+- `url()` : fonction qui génère l'URL complète
 
-`__()` : fonction qui renvoie la traduction pour une chaîne de caractère donnée
+- `__()` : fonction qui renvoie la traduction pour une chaîne de caractère donnée
 
-`session()` : Fonction qui récupère les données de session
+- `session()` : Fonction qui récupère les données de session
 
-`setLocale()` : Fonction qui change la langue de l'application
+- `setLocale()` : Fonction qui change la langue de l'application
+
+- `auth()->user()` : permet de récupérer l'utilisateur connecté ou `Auth::user()`
 
 ## Langage 
 Pour avoir les textes en une autre langue 
@@ -54,3 +57,67 @@ Dans le fichier on aura 'schema::table'
 ## Mass assignation
 Permet de définir plusieurs attributs d'un modèle en une seule fois. Par exemple, imaginez que vous avez un modèle `Utilisateur` avec des champs tels que `nom`, `email` et `rôle`. La mass assignation permet de définir tous ces champs en une fois, ce qui peut être très pratique et vous faire gagner du temps. 
 Cependant, si elle n'est pas gérée avec précaution, la mass assignation peut entraîner une vulnérabilité de sécurité appelée "over-posting" ou "vulnérabilité de mass assignation"
+
+## Crétion d'une policy 
+bash : `php artisan make:policy namePolicy --model=chirp` Permet de définir des méthodes limitant ou donnant accès à des actions utilisateur
+Nom par convention : nom du modèle préfixé de policy
+
+Résume : 
+Appelle du update à la soumission du formulaire -> validation , mise à jour et redirction vers la page 'index'
+- Tous utilisateur peut modifier un commentaire même si celui ci n'est pas le sien
+  -> Alors on crée une `policy` associé au model chirp. 
+  -> Modification des méthodes 'viewAny' et 'update'
+  -> Récupérer le commentaire associé à l'user et vérifier avec la méthode "is()" si les identifiants correspondent et que l'utilisateur est bien l'auteur du commentaire 
+  -> Modifier le update dans le `ChirpController` afin d'effectuer une vérification avant de permettre la modification `$this->authorize('update', $chirp)`
+
+- Cacher le bouton d'édition quand l'utilisateur n'est pas l'auteur du commentaire 
+  -> Mettre le dropdown sous une condition `@if ($chirp->user->is(auth()->user()))`. La fonction `auth()` est une fonction d'aide de Laravel permettant de récupérer l'utilisateur associé
+  -> Ajouté un petit tag "Modifié" si le commentaire est modifié en se servant d'une condition if?
+
+- Supprimer un commentaire 
+  -> Modifier la fonction destroy du Controller
+  -> créer un formulaire avec une méthode 'delete'
+  
+## Les étapes de création d'une notification ( Envoi de notification )
+
+1. Créer une notification (sms, email, slack...)
+2. Créer un évènement
+3. Dispatcher un évènement
+4. Créer un Event Listener
+5. Lier l'Event Listener à l'évènement créé 
+
+bash : `php artisan make:notification NewChirp`
+Faire une injection d'une instance de Chirp dans la constructeur afin de  pourvoir l'utiliser dans la classe
+
+**Créer un évènement** : `php artisan make:event ChirpCreatedEvent`
+Faire une injection d'une instance de Chirp dans la constructeur afin de  pourvoir l'utiliser dans la classe
+
+**Dispatcher un évènement**
+ -> Dans le model : Ajouter la propriété `$dispatchesEvents` avec différents clés
+
+    ```php
+     protected $dispatchesEvents = [
+        'created' => ChirpCreatedEvent::class, // Un évènement est automatiquement émis lorsqu'un  commentaire est crée
+        // 'updated' => ,
+        // 'deleted' => ,
+    ]
+    ```
+
+**Créer un Event Listener**
+-> Créer un écouteur d'évènement pour écouter l'évènement
+bash : `php artisan make:listener SendChirpCreatedNotification --event=ChirpCreatedEvent` Elle viendra avec une méthode qui aura en paramètre l'évènemnt spécifié 'ChirpCreatedEvent'
+
+-> Chercher le dossier 'Providers' et le fichier 'EventServiceProvider'. Modifier ce fichier [ propriété $listener ]. Il contient un tableau qui lie les évènements aux écouteurs d'évènement. On y ajoute notre évènement à son écouteur d'évènement
+
+*La notification est envoyé depuis la méthode handle du fichier SendChirpCreatedNotification dans Listener 
+
+-> Maintenant on doit pouvoir envoyer une notification à tous les utilisateurs sauf celui qui a écrit le commeentaire 
+
+```tinker
+User::where('id', '!=', '1')->get();
+
+User::whereNot()
+```
+
+
+  
