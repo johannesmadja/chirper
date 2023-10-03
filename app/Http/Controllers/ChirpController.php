@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\chirp;
 use App\Models\User;
+use App\Notifications\NewChirp;
 use Illuminate\Http\Request;
 
 class ChirpController extends Controller
@@ -38,6 +39,8 @@ class ChirpController extends Controller
 
         // envoyer les données en BDD
         $request->user()->chirps()->create($validated);
+
+        // $createdChirp->notify(new NewChirp($createdChirp));  envoi de la notification
 
         //rediriger sur chirps.index 
         return redirect(route('chirps.index'));

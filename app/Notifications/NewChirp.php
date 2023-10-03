@@ -40,9 +40,9 @@ class NewChirp extends Notification
     {
         return (new MailMessage)
                     ->subject('Nouveau commentaire de {$this->chirp->user->name}')
-                    ->greeting('Notification Action', url('/'))
+                    ->greeting('Notification Action')
                     ->line(Str::limit($this->chirp->message, 50))
-                    ->action("Allez vers le commentaire", url("/"))
+                    ->action("Allez vers le commentaire", route('chirp.show'))
                     ->line("Merci d'utiliser notre application !");
     }
 

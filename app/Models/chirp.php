@@ -6,10 +6,11 @@ use App\Events\ChirpCreatedEvent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Notifications\Notifiable;
 
 class chirp extends Model
 {
-    use HasFactory;
+    use HasFactory, Notifiable;
 
     /**
      * Champs qu'on peut soumettre
@@ -31,7 +32,7 @@ class chirp extends Model
     }
 
     protected $dispatchesEvents = [
-        'created' => ChirpCreatedEvent::class,
+        'created' => ChirpCreatedEvent::class, // Dans il crée un nouveau commentaire, il émettre cet évènement
         // 'updated' => ,
         // 'deleted' => ,
     ];

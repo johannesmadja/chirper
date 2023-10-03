@@ -87,6 +87,7 @@ Appelle du update à la soumission du formulaire -> validation , mise à jour et
 5. Lier l'Event Listener à l'évènement créé 
 
 bash : `php artisan make:notification NewChirp`
+C'est une classe qui représente le mail en question.
 Faire une injection d'une instance de Chirp dans la constructeur afin de  pourvoir l'utiliser dans la classe
 
 **Créer un évènement** : `php artisan make:event ChirpCreatedEvent`
@@ -119,5 +120,24 @@ User::where('id', '!=', '1')->get();
 User::whereNot()
 ```
 
+-> Aller ensuite dans app/Providers/EventServiceProvider.php 
+On va y faire la liaison entre l'évènement et son écouteur d'évènement dans la tableau $listen
 
-  
+```php 
+ protected $listen = [
+        Registered::class => [
+            SendEmailVerificationNotification::class,
+        ],
+
+        ChirpCreatedEvent::class => [
+            SendChirpCreatedNotification::class,
+        ],
+    ];
+```
+
+## Envoi de mail 
+Dans le Controller au niveau de la méthode store, on récupère le $request et on y applique la méthode notify. Penser à importer le trait notifiacation dans le model `use notification` 
+
+-> Définir à qui seront envoyé les notifications 
+Aller dans config->mail.php. On va y définir le service par lequel on veut envoyer notre notification
+Trouvé la clé env('default' => 'smtp')

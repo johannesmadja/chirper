@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\ChirpCreatedEvent;
 use App\Models\User;
+use App\Notifications\NewChirp;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
@@ -22,8 +23,9 @@ class SendChirpCreatedNotification
      */
     public function handle(ChirpCreatedEvent $event): void
     {
-        foreach (User::whereNot('id', $event->chirp->user_id) as $user) {
-            # code...
+        foreach (User::whereNot('id', $event->chirp->user_id) as $user) { 
+            # Envoi de mail aux utilisateur sauf à l'auteur du commentaire 
+            $user->notify(new NewChirp($event->chirp));
         }
     }
 }
